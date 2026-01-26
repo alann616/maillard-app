@@ -1,3 +1,5 @@
+import 'package:app/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 // Imports de tu proyecto
@@ -24,29 +26,25 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 3. INYECCIÓN DE DEPENDENCIAS GLOBAL
-    // Todo lo que esté debajo de esto puede acceder a la BD y al Menú
-    return RepositoryProvider(
-      create: (context) => ProductRepositoryImpl(db),
-      child: BlocProvider(
-        // Inicializamos el BLoC aquí para que el menú cargue rápido
-        // incluso antes de entrar a la pantalla
-        create: (context) => MenuBloc(context.read<ProductRepositoryImpl>())
-          ..add(LoadProducts()),
-        child: MaterialApp.router(
-          // 4. CONFIGURACIÓN DEL ROUTER (Escalabilidad)
-          routerConfig: appRouter,
-          debugShowCheckedModeBanner: false,
-          title: 'Maillard POS',
-          theme: ThemeData(
-            useMaterial3: true,
-            colorSchemeSeed: Colors.blueGrey,
-            scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFF1A1A1A),
-              foregroundColor: Colors.white,
-            ),
+
+    // Usamos MultiRepositoryProvider para inyectar ambos repos
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider(create: (context) => ProductRepositoryImpl(db)),
+        RepositoryProvider(create: (context) => AuthRepositoryImpl(db)), // <--- NUEVO
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) => MenuBloc(context.read<ProductRepositoryImpl>())..add(LoadProducts()),
           ),
+          BlocProvider(
+            create: (context) => AuthBloc(context.read<AuthRepositoryImpl>()), // <--- NUEVO
+          ),
+        ],
+        child: MaterialApp.router(
+          routerConfig: appRouter,
+          // ... resto del código ...
         ),
       ),
     );

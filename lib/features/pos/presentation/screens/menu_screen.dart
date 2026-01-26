@@ -1,3 +1,5 @@
+import 'package:app/features/auth/presentation/widgets/role_guard.dart';
+import 'package:app/features/pos/domain/models/user_role.dart';
 import 'package:app/features/pos/presentation/widgets/ticket_sidebard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,7 +20,9 @@ class MenuScreen extends StatelessWidget {
     return RepositoryProvider(
       create: (context) => ProductRepositoryImpl(AppDatabase()),
       child: BlocProvider(
-        create: (context) => MenuBloc(context.read<ProductRepositoryImpl>())..add(LoadProducts()),
+        create: (context) =>
+            MenuBloc(context.read<ProductRepositoryImpl>())
+              ..add(LoadProducts()),
         child: const _MenuScreenView(),
       ),
     );
@@ -34,12 +38,44 @@ class _MenuScreenView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.secondary,
-      appBar: AppBar(title: const Text("Punto de Venta"), backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
+      appBar: AppBar(
+        title: const Text("Punto de Venta"),
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+        actions: [
+          // Ejemplo extra: Un botón de configuración que SOLO ve el Admin
+          RoleGuard(
+            allowedRoles: const [UserRole.admin],
+            child: IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                /* Ir a ajustes */
+              },
+            ),
+          ),
+        ],
+      ),
+      // --- AQUÍ ESTÁ LA MAGIA ---
+      floatingActionButton: RoleGuard(
+        allowedRoles: const [UserRole.admin], // SOLO ADMINS
+        child: FloatingActionButton(
+          backgroundColor: AppTheme.primary,
+          child: const Icon(Icons.add, color: Colors.white),
+          onPressed: () {
+            // Aquí luego abriremos la pantalla de "Crear Producto"
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("¡Hola Jefe! Aquí crearás productos."),
+              ),
+            );
+          },
+        ),
+      ),
       body: state.status == MenuStatus.loading
           ? const Center(child: CircularProgressIndicator())
           : MediaQuery.of(context).size.width > 600
-              ? _buildTabletLayout(context, state)
-              : _buildMobileLayout(context, state),
+          ? _buildTabletLayout(context, state)
+          : _buildMobileLayout(context, state),
     );
   }
 
@@ -61,7 +97,9 @@ class _MenuScreenView extends StatelessWidget {
             child: TicketSidebar(
               order: state.orderItems,
               total: state.total,
-              onRemove: (idx) => context.read<MenuBloc>().add(RemoveProductFromOrder(state.orderItems[idx].product)),
+              onRemove: (idx) => context.read<MenuBloc>().add(
+                RemoveProductFromOrder(state.orderItems[idx].product),
+              ),
               onCheckout: () => context.read<MenuBloc>().add(ProcessCheckout()),
             ),
           ),
@@ -80,11 +118,13 @@ class _MenuScreenView extends StatelessWidget {
         ),
         if (state.orderItems.isNotEmpty)
           Positioned(
-            bottom: 20, left: 20, right: 20,
+            bottom: 20,
+            left: 20,
+            right: 20,
             child: PrimaryButton(
               text: "Ver Comanda (\$${state.total.toStringAsFixed(2)})",
               icon: Icons.receipt,
-              onPressed: () { 
+              onPressed: () {
                 _showTicketSheet(context);
               },
             ),
@@ -99,7 +139,7 @@ class _MenuScreenView extends StatelessWidget {
       backgroundColor: Colors.white,
       isScrollControlled: true, // Permite que crezca si hay muchos items
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20))
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) {
         // Usamos BlocProvider.value para pasar el BLoC existente al modal
@@ -114,7 +154,9 @@ class _MenuScreenView extends StatelessWidget {
                   total: state.total,
                   onRemove: (idx) {
                     final product = state.orderItems[idx].product;
-                    context.read<MenuBloc>().add(RemoveProductFromOrder(product));
+                    context.read<MenuBloc>().add(
+                      RemoveProductFromOrder(product),
+                    );
                   },
                   onCheckout: () {
                     context.read<MenuBloc>().add(ProcessCheckout());
