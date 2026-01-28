@@ -1,5 +1,4 @@
 import '../../../../core/database/app_database.dart';
-import '../../data/database/inventory.dart';
 import '../../domain/repositories/inventory_repository.dart';
 
 class InventoryRepositoryImpl implements InventoryRepository {
