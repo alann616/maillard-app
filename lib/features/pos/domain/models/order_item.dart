@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 // CORRECCIÓN 2: Importar la DB correcta en 'data/database'
-import '../../data/database/app_database.dart';
+import '../../../../core/database/app_database.dart';
 
 class OrderItem extends Equatable {
   final Product product;

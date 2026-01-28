@@ -1,12 +1,12 @@
 import 'package:app/features/auth/presentation/widgets/role_guard.dart';
 import 'package:app/features/pos/domain/models/user_role.dart';
-import 'package:app/features/pos/presentation/widgets/ticket_sidebard.dart';
+import 'package:app/features/pos/presentation/widgets/ticket_sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../config/theme/app_theme.dart';
 import '../../../../shared/widgets/primary_button.dart';
-import '../../data/database/app_database.dart';
-import '../../data/repositories/product_repository_impl.dart';
+// import '../../data/database/app_database.dart';
+// import '../../data/repositories/product_repository_impl.dart';
 import '../bloc/menu_bloc.dart';
 import '../widgets/product_list_view.dart';
 
@@ -17,15 +17,7 @@ class MenuScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Inyectamos el BLoC aquí
-    return RepositoryProvider(
-      create: (context) => ProductRepositoryImpl(AppDatabase()),
-      child: BlocProvider(
-        create: (context) =>
-            MenuBloc(context.read<ProductRepositoryImpl>())
-              ..add(LoadProducts()),
-        child: const _MenuScreenView(),
-      ),
-    );
+    return const _MenuScreenView();
   }
 }
 

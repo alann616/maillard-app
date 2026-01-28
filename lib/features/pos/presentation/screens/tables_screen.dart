@@ -23,7 +23,10 @@ class TablesScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.secondary,
       appBar: AppBar(
-        title: const Text('Mapa de Mesas', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Mapa de Mesas',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         actions: [
@@ -32,12 +35,14 @@ class TablesScreen extends StatelessWidget {
             onPressed: () {
               // 1. Disparamos evento de salida
               context.read<AuthBloc>().add(LogoutRequested());
-              // 2. Navegamos al login (GoRouter se encarga de limpiar el stack si lo configuramos, 
-              // pero por ahora un go directo funciona)
               context.go('/login');
-    },
-  ),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.refresh)),
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.inventory_2), // Icono de cajita
+            tooltip: 'Ver Inventario',
+            onPressed: () => context.push('/inventory'),
+          ),
           IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert)),
         ],
       ),
@@ -49,13 +54,13 @@ class TablesScreen extends StatelessWidget {
             // Leyenda de Estados
             const _StatusLegend(),
             const SizedBox(height: 20),
-            
+
             // Grid de Mesas
             Expanded(
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 150, // Ancho máximo adaptable
-                  childAspectRatio: 1.0,   // Cuadradas
+                  childAspectRatio: 1.0, // Cuadradas
                   crossAxisSpacing: 15,
                   mainAxisSpacing: 15,
                 ),
@@ -109,24 +114,24 @@ class _PosTableCard extends StatelessWidget {
               color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
-            )
+            ),
           ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.table_restaurant_rounded, 
-              size: 40, 
-              color: isFree ? Colors.grey[400] : color
+              Icons.table_restaurant_rounded,
+              size: 40,
+              color: isFree ? Colors.grey[400] : color,
             ),
             const SizedBox(height: 8),
             Text(
               "Mesa $tableNumber",
               style: TextStyle(
-                fontSize: 18, 
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: isFree ? Colors.black87 : color
+                color: isFree ? Colors.black87 : color,
               ),
             ),
             const SizedBox(height: 4),
@@ -138,9 +143,13 @@ class _PosTableCard extends StatelessWidget {
               ),
               child: Text(
                 _getStatusText(status),
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -149,17 +158,23 @@ class _PosTableCard extends StatelessWidget {
 
   Color _getStatusColor(TableStatus status) {
     switch (status) {
-      case TableStatus.free: return AppTheme.accent; // Verde (o gris oscuro si prefieres)
-      case TableStatus.busy: return Colors.orange[800]!;
-      case TableStatus.paying: return AppTheme.error; // Rojo
+      case TableStatus.free:
+        return AppTheme.accent; // Verde (o gris oscuro si prefieres)
+      case TableStatus.busy:
+        return Colors.orange[800]!;
+      case TableStatus.paying:
+        return AppTheme.error; // Rojo
     }
   }
 
   String _getStatusText(TableStatus status) {
     switch (status) {
-      case TableStatus.free: return "LIBRE";
-      case TableStatus.busy: return "OCUPADA";
-      case TableStatus.paying: return "PAGANDO";
+      case TableStatus.free:
+        return "LIBRE";
+      case TableStatus.busy:
+        return "OCUPADA";
+      case TableStatus.paying:
+        return "PAGANDO";
     }
   }
 }
@@ -192,7 +207,10 @@ class _LegendItem extends StatelessWidget {
       children: [
         CircleAvatar(radius: 5, backgroundColor: color),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12)),
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+        ),
       ],
     );
   }

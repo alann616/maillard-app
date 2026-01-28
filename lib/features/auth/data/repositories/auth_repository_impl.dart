@@ -1,4 +1,4 @@
-import '../../../../features/pos/data/database/app_database.dart';
+import '../../../../core/database/app_database.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {

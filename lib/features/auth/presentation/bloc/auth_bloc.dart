@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../../../../features/pos/data/database/app_database.dart';
+import '../../../../core/database/app_database.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 // --- EVENTOS ---

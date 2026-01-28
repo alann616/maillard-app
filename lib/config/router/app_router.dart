@@ -1,3 +1,4 @@
+import 'package:app/features/inventory/presentation/screens/inventory_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:app/features/pos/presentation/screens/menu_screen.dart';
 import 'package:app/features/pos/presentation/screens/tables_screen.dart';
@@ -20,6 +21,10 @@ final appRouter = GoRouter(
         final tableId = state.pathParameters['tableId'] ?? '1';
         return MenuScreen(tableId: tableId);
       },
+    ),
+    GoRoute(
+      path: '/inventory',
+      builder: (context, state) => const InventoryScreen(),
     ),
   ],
 );

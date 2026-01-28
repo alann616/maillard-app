@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../data/database/app_database.dart';
+import '../../../../core/database/app_database.dart';
 import 'pos_product_card.dart';
 
 class ProductListView extends StatelessWidget {

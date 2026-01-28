@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../config/theme/app_theme.dart';
-import '../../data/database/app_database.dart';
+import '../../../../core/database/app_database.dart';
 
 class PosProductCard extends StatelessWidget {
   final Product product;
