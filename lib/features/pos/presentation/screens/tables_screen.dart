@@ -1,4 +1,6 @@
+import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../config/theme/app_theme.dart';
 
@@ -25,6 +27,16 @@ class TablesScreen extends StatelessWidget {
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              // 1. Disparamos evento de salida
+              context.read<AuthBloc>().add(LogoutRequested());
+              // 2. Navegamos al login (GoRouter se encarga de limpiar el stack si lo configuramos, 
+              // pero por ahora un go directo funciona)
+              context.go('/login');
+    },
+  ),
           IconButton(onPressed: () {}, icon: const Icon(Icons.refresh)),
           IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert)),
         ],
