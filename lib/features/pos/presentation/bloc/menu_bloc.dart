@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 
@@ -72,7 +73,7 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
             }
           } catch (e) {
             // Non-critical error: just start with an empty table
-            print("Warning: Could not restore pending order: $e");
+            debugPrint("Warning: Could not restore pending order: $e");
           }
         }
       }
