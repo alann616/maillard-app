@@ -7,12 +7,14 @@ class MenuState extends Equatable {
   final List<Product> products;
   final List<OrderItem> orderItems;
   final String? errorMessage;
+  final int? tableId;
 
   const MenuState({
     this.status = MenuStatus.initial,
     this.products = const [],
     this.orderItems = const [],
     this.errorMessage,
+    this.tableId,
   });
 
   double get total => orderItems.fold(0, (sum, item) => sum + item.total);
@@ -27,15 +29,17 @@ class MenuState extends Equatable {
     List<Product>? products,
     List<OrderItem>? orderItems,
     String? errorMessage,
+    int? tableId,
   }) {
     return MenuState(
       status: status ?? this.status,
       products: products ?? this.products,
       orderItems: orderItems ?? this.orderItems,
       errorMessage: errorMessage ?? this.errorMessage,
+      tableId: tableId ?? this.tableId,
     );
   }
 
   @override
-  List<Object?> get props => [status, products, orderItems, errorMessage];
+  List<Object?> get props => [status, products, orderItems, errorMessage, tableId];
 }

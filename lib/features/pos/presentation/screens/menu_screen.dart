@@ -1,13 +1,12 @@
-import 'package:app/features/auth/presentation/widgets/role_guard.dart';
-import 'package:app/features/pos/domain/models/user_role.dart';
-import 'package:app/features/pos/presentation/widgets/ticket_sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+// Imports propios
 import '../../../../config/theme/app_theme.dart';
 import '../../../../shared/widgets/primary_button.dart';
-// import '../../data/database/app_database.dart';
-// import '../../data/repositories/product_repository_impl.dart';
-import '../bloc/menu_bloc.dart';
+import '../../../auth/presentation/widgets/role_guard.dart';
+import '../../../pos/domain/models/user_role.dart';
+import '../../presentation/widgets/ticket_sidebar.dart';
+import '../bloc/menu_bloc.dart'; // Importa SaveOrder aquí
 import '../widgets/product_list_view.dart';
 
 class MenuScreen extends StatelessWidget {
@@ -16,7 +15,12 @@ class MenuScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Inyectamos el BLoC aquí
+    final int id = int.tryParse(tableId) ?? 0;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MenuBloc>().add(SetupTable(id));
+    });
+    
     return const _MenuScreenView();
   }
 }
@@ -35,30 +39,23 @@ class _MenuScreenView extends StatelessWidget {
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         actions: [
-          // Ejemplo extra: Un botón de configuración que SOLO ve el Admin
           RoleGuard(
             allowedRoles: const [UserRole.admin],
             child: IconButton(
               icon: const Icon(Icons.settings),
-              onPressed: () {
-                /* Ir a ajustes */
-              },
+              onPressed: () { /* Ir a ajustes */ },
             ),
           ),
         ],
       ),
-      // --- AQUÍ ESTÁ LA MAGIA ---
       floatingActionButton: RoleGuard(
-        allowedRoles: const [UserRole.admin], // SOLO ADMINS
+        allowedRoles: const [UserRole.admin],
         child: FloatingActionButton(
           backgroundColor: AppTheme.primary,
           child: const Icon(Icons.add, color: Colors.white),
           onPressed: () {
-            // Aquí luego abriremos la pantalla de "Crear Producto"
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("¡Hola Jefe! Aquí crearás productos."),
-              ),
+              const SnackBar(content: Text("¡Hola Jefe! Aquí crearás productos.")),
             );
           },
         ),
@@ -71,6 +68,7 @@ class _MenuScreenView extends StatelessWidget {
     );
   }
 
+  // --- LAYOUT TABLET ---
   Widget _buildTabletLayout(BuildContext context, MenuState state) {
     return Row(
       children: [
@@ -86,6 +84,7 @@ class _MenuScreenView extends StatelessWidget {
           flex: 1,
           child: Container(
             color: Colors.white,
+            // Aquí conectamos el nuevo evento onSave
             child: TicketSidebar(
               order: state.orderItems,
               total: state.total,
@@ -93,6 +92,14 @@ class _MenuScreenView extends StatelessWidget {
                 RemoveProductFromOrder(state.orderItems[idx].product),
               ),
               onCheckout: () => context.read<MenuBloc>().add(ProcessCheckout()),
+              // NUEVO: Conectamos Guardar
+              onSave: () {
+                context.read<MenuBloc>().add(SaveOrder());
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Comanda Guardada 📝"), backgroundColor: Colors.orange),
+                );
+                Navigator.pop(context); // Salir al mapa
+              },
             ),
           ),
         ),
@@ -100,6 +107,7 @@ class _MenuScreenView extends StatelessWidget {
     );
   }
 
+  // --- LAYOUT MÓVIL ---
   Widget _buildMobileLayout(BuildContext context, MenuState state) {
     return Stack(
       children: [
@@ -129,30 +137,36 @@ class _MenuScreenView extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      isScrollControlled: true, // Permite que crezca si hay muchos items
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) {
-        // Usamos BlocProvider.value para pasar el BLoC existente al modal
         return BlocProvider.value(
           value: context.read<MenuBloc>(),
           child: BlocBuilder<MenuBloc, MenuState>(
             builder: (context, state) {
               return FractionallySizedBox(
-                heightFactor: 0.85, // Ocupa el 85% de la pantalla
+                heightFactor: 0.85,
                 child: TicketSidebar(
                   order: state.orderItems,
                   total: state.total,
                   onRemove: (idx) {
                     final product = state.orderItems[idx].product;
-                    context.read<MenuBloc>().add(
-                      RemoveProductFromOrder(product),
-                    );
+                    context.read<MenuBloc>().add(RemoveProductFromOrder(product));
                   },
                   onCheckout: () {
                     context.read<MenuBloc>().add(ProcessCheckout());
-                    Navigator.pop(context); // Cierra el modal al cobrar
+                    Navigator.pop(context);
+                  },
+                  // NUEVO: Conectamos Guardar en Móvil también
+                  onSave: () {
+                    context.read<MenuBloc>().add(SaveOrder());
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Comanda Guardada 📝"), backgroundColor: Colors.orange),
+                    );
+                    Navigator.pop(context); // Cierra el Sheet
+                    Navigator.pop(context); // Sale al mapa (Opcional, si quieres que te saque de la mesa)
                   },
                 ),
               );

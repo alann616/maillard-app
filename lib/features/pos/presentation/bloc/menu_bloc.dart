@@ -1,23 +1,25 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-// import 'package:flutter/foundation.dart';
-// import 'package:drift/drift.dart' show Value; // <--- Import necesario para Drift
 
-// import '../../../../features/sales/data/database/sales.dart'; // <--- Import para SaleItemsCompanion
-import '../../../../core/database/app_database.dart';
+// Core & Domain Imports
+import '../../../../core/database/app_database.dart'; 
 import '../../domain/models/order_item.dart';
 import '../../domain/repositories/product_repository.dart';
 
 part 'menu_event.dart';
 part 'menu_state.dart';
 
+/// Manages the state of the POS Menu Screen.
+/// Handles product catalog loading, order manipulation, and interaction
+/// with the database for saving pending orders and processing checkouts.
 class MenuBloc extends Bloc<MenuEvent, MenuState> {
   final ProductRepository _repository;
-  final AppDatabase _db; // Referencia a la BD
+  final AppDatabase _db;
 
-  // Pedimos ambos en el constructor
   MenuBloc(this._repository, this._db) : super(const MenuState()) {
     
+    // --- Catalog Management ---
+
     on<LoadProducts>((event, emit) async {
       emit(state.copyWith(status: MenuStatus.loading));
       try {
@@ -28,9 +30,88 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
       }
     });
 
+    // --- Table & Persistence Management ---
+
+    on<SetupTable>((event, emit) async {
+      // Always clear local state when switching tables to avoid data pollution
+      if (state.tableId != event.tableId) {
+        emit(state.copyWith(
+          tableId: event.tableId,
+          orderItems: [], 
+          status: MenuStatus.initial
+        ));
+
+        // Attempt to restore pending order from DB
+        if (event.tableId > 0) {
+          try {
+            final pendingData = await _db.getPendingOrder(event.tableId);
+            
+            if (pendingData != null && pendingData.items.isNotEmpty) {
+              // Ensure we have the product catalog loaded to reconstruct OrderItems
+              var currentProducts = state.products;
+              if (currentProducts.isEmpty) {
+                 currentProducts = await _repository.getAllProducts();
+              }
+
+              final List<OrderItem> restoredItems = [];
+
+              // Map DB items (SaleItems) back to UI items (OrderItems)
+              for (var dbItem in pendingData.items) {
+                try {
+                  final product = currentProducts.firstWhere((p) => p.id == dbItem.productId);
+                  restoredItems.add(OrderItem(product: product, quantity: dbItem.quantity));
+                } catch (e) {
+                  // Product might have been deleted from catalog; skip or handle accordingly
+                }
+              }
+
+              emit(state.copyWith(
+                orderItems: restoredItems,
+                products: currentProducts // Update products in case they were lazy-loaded here
+              ));
+            }
+          } catch (e) {
+            // Non-critical error: just start with an empty table
+            print("Warning: Could not restore pending order: $e");
+          }
+        }
+      }
+    });
+
+    on<SaveOrder>((event, emit) async {
+      if (state.orderItems.isEmpty || state.tableId == null) return;
+
+      try {
+        final saleItems = state.orderItems.map((item) {
+          return SaleItemsCompanion.insert(
+            saleId: 0, // Placeholder, DB handles logic
+            productId: item.product.id,
+            productName: item.product.name,
+            price: item.product.price,
+            quantity: item.quantity,
+          );
+        }).toList();
+
+        // Perform UPSERT operation (Update existing or Insert new pending)
+        await _db.savePendingOrder(
+          tableId: state.tableId!,
+          total: state.total,
+          items: saleItems,
+        );
+
+        // Notify success but keep items visible for further editing
+        emit(state.copyWith(status: MenuStatus.success));
+      } catch (e) {
+        emit(state.copyWith(errorMessage: "Failed to save order: $e"));
+      }
+    });
+
+    // --- Order Manipulation ---
+
     on<AddProductToOrder>((event, emit) {
       final items = List<OrderItem>.from(state.orderItems);
       final index = items.indexWhere((i) => i.product.id == event.product.id);
+      
       if (index != -1) {
         items[index] = items[index].increment();
       } else {
@@ -42,7 +123,9 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
     on<RemoveProductFromOrder>((event, emit) {
       final items = List<OrderItem>.from(state.orderItems);
       final index = items.indexWhere((i) => i.product.id == event.product.id);
+      
       if (index == -1) return;
+      
       if (items[index].quantity > 1) {
         items[index] = items[index].decrement();
       } else {
@@ -51,17 +134,15 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
       emit(state.copyWith(orderItems: items));
     });
 
-    // --- AQUÍ ESTABA EL ERROR ---
+    // --- Checkout Process ---
+
     on<ProcessCheckout>((event, emit) async {
       if (state.orderItems.isEmpty) return;
 
       try {
-        // Convertimos la orden de la UI a objetos de la Base de Datos
         final saleItems = state.orderItems.map((item) {
           return SaleItemsCompanion.insert(
-            // TRUCO: Drift pide saleId obligatoriamente en .insert.
-            // Ponemos 0 porque createSale() lo va a sobrescribir con el ID real.
-            saleId: 0, 
+            saleId: 0,
             productId: item.product.id,
             productName: item.product.name,
             price: item.product.price,
@@ -69,17 +150,17 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
           );
         }).toList();
 
-        // Guardamos usando la transacción segura
-        await _db.createSale(
+        // Finalize sale, update inventory, and close table status
+        await _db.completeSale(
+          tableId: state.tableId, 
           total: state.total,
-          paymentMethod: 'Efectivo',
           items: saleItems,
         );
 
-        // Limpiamos la pantalla
+        // Clear local state as transaction is complete
         emit(state.copyWith(orderItems: [], status: MenuStatus.success));
       } catch (e) {
-        emit(state.copyWith(errorMessage: "Error al cobrar: $e"));
+        emit(state.copyWith(errorMessage: "Checkout failed: $e"));
       }
     });
   }

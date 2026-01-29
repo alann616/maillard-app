@@ -2,6 +2,7 @@ import 'package:app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:app/features/inventory/data/repositories/inventory_repository_impl.dart';
 import 'package:app/features/inventory/presentation/bloc/inventory_bloc.dart';
+import 'package:app/features/pos/presentation/bloc/table_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 // Imports de tu proyecto
@@ -51,7 +52,10 @@ class MainApp extends StatelessWidget {
             create: (context) => InventoryBloc(
               context.read<InventoryRepositoryImpl>()
               )..add(SubscribeToInventory()),
-            )
+          ),
+          BlocProvider(
+            create: (context) => TableBloc(db)..add(SubscribeToTables())
+          )
         ],
         child: MaterialApp.router(
           routerConfig: appRouter,

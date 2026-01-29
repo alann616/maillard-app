@@ -9,6 +9,7 @@ class TicketSidebar extends StatelessWidget {
   final double total;
   final Function(int) onRemove;
   final VoidCallback onCheckout;
+  final VoidCallback onSave; // <--- NUEVO CALLBACK
 
   const TicketSidebar({
     super.key,
@@ -16,22 +17,25 @@ class TicketSidebar extends StatelessWidget {
     required this.total,
     required this.onRemove,
     required this.onCheckout,
+    required this.onSave, // <--- REQUERIDO
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Padding(padding: const EdgeInsets.all(20), child: Text("TU ORDEN", style: AppTheme.titleLarge)),
+        Padding(
+          padding: const EdgeInsets.all(20), 
+          child: Text("TU ORDEN", style: AppTheme.titleLarge)
+        ),
         Expanded(
           child: order.isEmpty 
           ? const Center(child: Text("Ticket Vacío"))
           : ListView.separated(
               itemCount: order.length,
-              separatorBuilder: (_, __) => const Divider(),
+              separatorBuilder: (context, index) => const Divider(),
               itemBuilder: (ctx, i) {
                 final item = order[i];
-                // Usamos el widget atómico que acabamos de crear
                 return PosTicketItem(
                   productName: item.product.name,
                   price: item.product.price,
@@ -42,7 +46,12 @@ class TicketSidebar extends StatelessWidget {
               },
             ),
         ),
-        _TicketFooter(total: total, onCheckout: onCheckout, hasItems: order.isNotEmpty),
+        _TicketFooter(
+          total: total, 
+          onCheckout: onCheckout, 
+          onSave: onSave, // Pasamos el evento
+          hasItems: order.isNotEmpty
+        ),
       ],
     );
   }
@@ -51,18 +60,26 @@ class TicketSidebar extends StatelessWidget {
 class _TicketFooter extends StatelessWidget {
   final double total;
   final VoidCallback onCheckout;
+  final VoidCallback onSave; // <--- NUEVO
   final bool hasItems;
 
-  const _TicketFooter({required this.total, required this.onCheckout, required this.hasItems});
+  const _TicketFooter({
+    required this.total, 
+    required this.onCheckout, 
+    required this.onSave, // <---
+    required this.hasItems
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)]),
+      decoration: const BoxDecoration(
+        color: Colors.white, 
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)]
+      ),
       child: Column(
         children: [
-          // FIX VISUAL: FittedBox para evitar overflow
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Row(
@@ -75,7 +92,33 @@ class _TicketFooter extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 15),
-          PrimaryButton(text: "COBRAR", icon: Icons.attach_money, onPressed: hasItems ? onCheckout : null),
+          
+          // --- NUEVO DISEÑO DE BOTONES ---
+          Row(
+            children: [
+              // Botón GUARDAR (Outline Naranja)
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16), // Altura similar al PrimaryButton
+                    side: const BorderSide(color: Colors.orange, width: 2),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: hasItems ? onSave : null,
+                  child: const Text("GUARDAR", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Botón COBRAR (Primary)
+              Expanded(
+                child: PrimaryButton(
+                  text: "COBRAR", 
+                  // icon: Icons.attach_money, // Opcional, quité el icono para que quepa mejor el texto
+                  onPressed: hasItems ? onCheckout : null
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

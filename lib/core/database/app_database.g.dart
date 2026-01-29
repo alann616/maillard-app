@@ -631,8 +631,36 @@ class $SalesTable extends Sales with TableInfo<$SalesTable, Sale> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _tableIdMeta = const VerificationMeta(
+    'tableId',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, total, date, paymentMethod];
+  late final GeneratedColumn<int> tableId = GeneratedColumn<int>(
+    'table_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<SaleStatus, int> status =
+      GeneratedColumn<int>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      ).withConverter<SaleStatus>($SalesTable.$converterstatus);
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    total,
+    date,
+    paymentMethod,
+    tableId,
+    status,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -673,6 +701,12 @@ class $SalesTable extends Sales with TableInfo<$SalesTable, Sale> {
     } else if (isInserting) {
       context.missing(_paymentMethodMeta);
     }
+    if (data.containsKey('table_id')) {
+      context.handle(
+        _tableIdMeta,
+        tableId.isAcceptableOrUnknown(data['table_id']!, _tableIdMeta),
+      );
+    }
     return context;
   }
 
@@ -698,6 +732,16 @@ class $SalesTable extends Sales with TableInfo<$SalesTable, Sale> {
         DriftSqlType.string,
         data['${effectivePrefix}payment_method'],
       )!,
+      tableId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}table_id'],
+      ),
+      status: $SalesTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
     );
   }
 
@@ -705,6 +749,9 @@ class $SalesTable extends Sales with TableInfo<$SalesTable, Sale> {
   $SalesTable createAlias(String alias) {
     return $SalesTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<SaleStatus, int, int> $converterstatus =
+      const EnumIndexConverter<SaleStatus>(SaleStatus.values);
 }
 
 class Sale extends DataClass implements Insertable<Sale> {
@@ -712,11 +759,15 @@ class Sale extends DataClass implements Insertable<Sale> {
   final double total;
   final DateTime date;
   final String paymentMethod;
+  final int? tableId;
+  final SaleStatus status;
   const Sale({
     required this.id,
     required this.total,
     required this.date,
     required this.paymentMethod,
+    this.tableId,
+    required this.status,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -725,6 +776,12 @@ class Sale extends DataClass implements Insertable<Sale> {
     map['total'] = Variable<double>(total);
     map['date'] = Variable<DateTime>(date);
     map['payment_method'] = Variable<String>(paymentMethod);
+    if (!nullToAbsent || tableId != null) {
+      map['table_id'] = Variable<int>(tableId);
+    }
+    {
+      map['status'] = Variable<int>($SalesTable.$converterstatus.toSql(status));
+    }
     return map;
   }
 
@@ -734,6 +791,10 @@ class Sale extends DataClass implements Insertable<Sale> {
       total: Value(total),
       date: Value(date),
       paymentMethod: Value(paymentMethod),
+      tableId: tableId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tableId),
+      status: Value(status),
     );
   }
 
@@ -747,6 +808,10 @@ class Sale extends DataClass implements Insertable<Sale> {
       total: serializer.fromJson<double>(json['total']),
       date: serializer.fromJson<DateTime>(json['date']),
       paymentMethod: serializer.fromJson<String>(json['paymentMethod']),
+      tableId: serializer.fromJson<int?>(json['tableId']),
+      status: $SalesTable.$converterstatus.fromJson(
+        serializer.fromJson<int>(json['status']),
+      ),
     );
   }
   @override
@@ -757,6 +822,10 @@ class Sale extends DataClass implements Insertable<Sale> {
       'total': serializer.toJson<double>(total),
       'date': serializer.toJson<DateTime>(date),
       'paymentMethod': serializer.toJson<String>(paymentMethod),
+      'tableId': serializer.toJson<int?>(tableId),
+      'status': serializer.toJson<int>(
+        $SalesTable.$converterstatus.toJson(status),
+      ),
     };
   }
 
@@ -765,11 +834,15 @@ class Sale extends DataClass implements Insertable<Sale> {
     double? total,
     DateTime? date,
     String? paymentMethod,
+    Value<int?> tableId = const Value.absent(),
+    SaleStatus? status,
   }) => Sale(
     id: id ?? this.id,
     total: total ?? this.total,
     date: date ?? this.date,
     paymentMethod: paymentMethod ?? this.paymentMethod,
+    tableId: tableId.present ? tableId.value : this.tableId,
+    status: status ?? this.status,
   );
   Sale copyWithCompanion(SalesCompanion data) {
     return Sale(
@@ -779,6 +852,8 @@ class Sale extends DataClass implements Insertable<Sale> {
       paymentMethod: data.paymentMethod.present
           ? data.paymentMethod.value
           : this.paymentMethod,
+      tableId: data.tableId.present ? data.tableId.value : this.tableId,
+      status: data.status.present ? data.status.value : this.status,
     );
   }
 
@@ -788,13 +863,16 @@ class Sale extends DataClass implements Insertable<Sale> {
           ..write('id: $id, ')
           ..write('total: $total, ')
           ..write('date: $date, ')
-          ..write('paymentMethod: $paymentMethod')
+          ..write('paymentMethod: $paymentMethod, ')
+          ..write('tableId: $tableId, ')
+          ..write('status: $status')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, total, date, paymentMethod);
+  int get hashCode =>
+      Object.hash(id, total, date, paymentMethod, tableId, status);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -802,7 +880,9 @@ class Sale extends DataClass implements Insertable<Sale> {
           other.id == this.id &&
           other.total == this.total &&
           other.date == this.date &&
-          other.paymentMethod == this.paymentMethod);
+          other.paymentMethod == this.paymentMethod &&
+          other.tableId == this.tableId &&
+          other.status == this.status);
 }
 
 class SalesCompanion extends UpdateCompanion<Sale> {
@@ -810,17 +890,23 @@ class SalesCompanion extends UpdateCompanion<Sale> {
   final Value<double> total;
   final Value<DateTime> date;
   final Value<String> paymentMethod;
+  final Value<int?> tableId;
+  final Value<SaleStatus> status;
   const SalesCompanion({
     this.id = const Value.absent(),
     this.total = const Value.absent(),
     this.date = const Value.absent(),
     this.paymentMethod = const Value.absent(),
+    this.tableId = const Value.absent(),
+    this.status = const Value.absent(),
   });
   SalesCompanion.insert({
     this.id = const Value.absent(),
     required double total,
     this.date = const Value.absent(),
     required String paymentMethod,
+    this.tableId = const Value.absent(),
+    this.status = const Value.absent(),
   }) : total = Value(total),
        paymentMethod = Value(paymentMethod);
   static Insertable<Sale> custom({
@@ -828,12 +914,16 @@ class SalesCompanion extends UpdateCompanion<Sale> {
     Expression<double>? total,
     Expression<DateTime>? date,
     Expression<String>? paymentMethod,
+    Expression<int>? tableId,
+    Expression<int>? status,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (total != null) 'total': total,
       if (date != null) 'date': date,
       if (paymentMethod != null) 'payment_method': paymentMethod,
+      if (tableId != null) 'table_id': tableId,
+      if (status != null) 'status': status,
     });
   }
 
@@ -842,12 +932,16 @@ class SalesCompanion extends UpdateCompanion<Sale> {
     Value<double>? total,
     Value<DateTime>? date,
     Value<String>? paymentMethod,
+    Value<int?>? tableId,
+    Value<SaleStatus>? status,
   }) {
     return SalesCompanion(
       id: id ?? this.id,
       total: total ?? this.total,
       date: date ?? this.date,
       paymentMethod: paymentMethod ?? this.paymentMethod,
+      tableId: tableId ?? this.tableId,
+      status: status ?? this.status,
     );
   }
 
@@ -866,6 +960,14 @@ class SalesCompanion extends UpdateCompanion<Sale> {
     if (paymentMethod.present) {
       map['payment_method'] = Variable<String>(paymentMethod.value);
     }
+    if (tableId.present) {
+      map['table_id'] = Variable<int>(tableId.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<int>(
+        $SalesTable.$converterstatus.toSql(status.value),
+      );
+    }
     return map;
   }
 
@@ -875,7 +977,9 @@ class SalesCompanion extends UpdateCompanion<Sale> {
           ..write('id: $id, ')
           ..write('total: $total, ')
           ..write('date: $date, ')
-          ..write('paymentMethod: $paymentMethod')
+          ..write('paymentMethod: $paymentMethod, ')
+          ..write('tableId: $tableId, ')
+          ..write('status: $status')
           ..write(')'))
         .toString();
   }
@@ -2026,6 +2130,198 @@ class RecipesCompanion extends UpdateCompanion<Recipe> {
   }
 }
 
+class $RestaurantTablesTable extends RestaurantTables
+    with TableInfo<$RestaurantTablesTable, RestaurantTable> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RestaurantTablesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'restaurant_tables';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RestaurantTable> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RestaurantTable map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RestaurantTable(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+    );
+  }
+
+  @override
+  $RestaurantTablesTable createAlias(String alias) {
+    return $RestaurantTablesTable(attachedDatabase, alias);
+  }
+}
+
+class RestaurantTable extends DataClass implements Insertable<RestaurantTable> {
+  final int id;
+  final String name;
+  const RestaurantTable({required this.id, required this.name});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    return map;
+  }
+
+  RestaurantTablesCompanion toCompanion(bool nullToAbsent) {
+    return RestaurantTablesCompanion(id: Value(id), name: Value(name));
+  }
+
+  factory RestaurantTable.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RestaurantTable(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+    };
+  }
+
+  RestaurantTable copyWith({int? id, String? name}) =>
+      RestaurantTable(id: id ?? this.id, name: name ?? this.name);
+  RestaurantTable copyWithCompanion(RestaurantTablesCompanion data) {
+    return RestaurantTable(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RestaurantTable(')
+          ..write('id: $id, ')
+          ..write('name: $name')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RestaurantTable &&
+          other.id == this.id &&
+          other.name == this.name);
+}
+
+class RestaurantTablesCompanion extends UpdateCompanion<RestaurantTable> {
+  final Value<int> id;
+  final Value<String> name;
+  const RestaurantTablesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+  });
+  RestaurantTablesCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+  }) : name = Value(name);
+  static Insertable<RestaurantTable> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+    });
+  }
+
+  RestaurantTablesCompanion copyWith({Value<int>? id, Value<String>? name}) {
+    return RestaurantTablesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RestaurantTablesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2035,6 +2331,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SaleItemsTable saleItems = $SaleItemsTable(this);
   late final $IngredientsTable ingredients = $IngredientsTable(this);
   late final $RecipesTable recipes = $RecipesTable(this);
+  late final $RestaurantTablesTable restaurantTables = $RestaurantTablesTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2046,6 +2345,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     saleItems,
     ingredients,
     recipes,
+    restaurantTables,
   ];
 }
 
@@ -2488,6 +2788,8 @@ typedef $$SalesTableCreateCompanionBuilder =
       required double total,
       Value<DateTime> date,
       required String paymentMethod,
+      Value<int?> tableId,
+      Value<SaleStatus> status,
     });
 typedef $$SalesTableUpdateCompanionBuilder =
     SalesCompanion Function({
@@ -2495,6 +2797,8 @@ typedef $$SalesTableUpdateCompanionBuilder =
       Value<double> total,
       Value<DateTime> date,
       Value<String> paymentMethod,
+      Value<int?> tableId,
+      Value<SaleStatus> status,
     });
 
 final class $$SalesTableReferences
@@ -2547,6 +2851,17 @@ class $$SalesTableFilterComposer extends Composer<_$AppDatabase, $SalesTable> {
     column: $table.paymentMethod,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<int> get tableId => $composableBuilder(
+    column: $table.tableId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<SaleStatus, SaleStatus, int> get status =>
+      $composableBuilder(
+        column: $table.status,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   Expression<bool> saleItemsRefs(
     Expression<bool> Function($$SaleItemsTableFilterComposer f) f,
@@ -2602,6 +2917,16 @@ class $$SalesTableOrderingComposer
     column: $table.paymentMethod,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get tableId => $composableBuilder(
+    column: $table.tableId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SalesTableAnnotationComposer
@@ -2626,6 +2951,12 @@ class $$SalesTableAnnotationComposer
     column: $table.paymentMethod,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get tableId =>
+      $composableBuilder(column: $table.tableId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<SaleStatus, int> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
 
   Expression<T> saleItemsRefs<T extends Object>(
     Expression<T> Function($$SaleItemsTableAnnotationComposer a) f,
@@ -2685,11 +3016,15 @@ class $$SalesTableTableManager
                 Value<double> total = const Value.absent(),
                 Value<DateTime> date = const Value.absent(),
                 Value<String> paymentMethod = const Value.absent(),
+                Value<int?> tableId = const Value.absent(),
+                Value<SaleStatus> status = const Value.absent(),
               }) => SalesCompanion(
                 id: id,
                 total: total,
                 date: date,
                 paymentMethod: paymentMethod,
+                tableId: tableId,
+                status: status,
               ),
           createCompanionCallback:
               ({
@@ -2697,11 +3032,15 @@ class $$SalesTableTableManager
                 required double total,
                 Value<DateTime> date = const Value.absent(),
                 required String paymentMethod,
+                Value<int?> tableId = const Value.absent(),
+                Value<SaleStatus> status = const Value.absent(),
               }) => SalesCompanion.insert(
                 id: id,
                 total: total,
                 date: date,
                 paymentMethod: paymentMethod,
+                tableId: tableId,
+                status: status,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -3798,6 +4137,135 @@ typedef $$RecipesTableProcessedTableManager =
       Recipe,
       PrefetchHooks Function({bool productId, bool ingredientId})
     >;
+typedef $$RestaurantTablesTableCreateCompanionBuilder =
+    RestaurantTablesCompanion Function({Value<int> id, required String name});
+typedef $$RestaurantTablesTableUpdateCompanionBuilder =
+    RestaurantTablesCompanion Function({Value<int> id, Value<String> name});
+
+class $$RestaurantTablesTableFilterComposer
+    extends Composer<_$AppDatabase, $RestaurantTablesTable> {
+  $$RestaurantTablesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RestaurantTablesTableOrderingComposer
+    extends Composer<_$AppDatabase, $RestaurantTablesTable> {
+  $$RestaurantTablesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RestaurantTablesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RestaurantTablesTable> {
+  $$RestaurantTablesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+}
+
+class $$RestaurantTablesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RestaurantTablesTable,
+          RestaurantTable,
+          $$RestaurantTablesTableFilterComposer,
+          $$RestaurantTablesTableOrderingComposer,
+          $$RestaurantTablesTableAnnotationComposer,
+          $$RestaurantTablesTableCreateCompanionBuilder,
+          $$RestaurantTablesTableUpdateCompanionBuilder,
+          (
+            RestaurantTable,
+            BaseReferences<
+              _$AppDatabase,
+              $RestaurantTablesTable,
+              RestaurantTable
+            >,
+          ),
+          RestaurantTable,
+          PrefetchHooks Function()
+        > {
+  $$RestaurantTablesTableTableManager(
+    _$AppDatabase db,
+    $RestaurantTablesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RestaurantTablesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RestaurantTablesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RestaurantTablesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+              }) => RestaurantTablesCompanion(id: id, name: name),
+          createCompanionCallback:
+              ({Value<int> id = const Value.absent(), required String name}) =>
+                  RestaurantTablesCompanion.insert(id: id, name: name),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RestaurantTablesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RestaurantTablesTable,
+      RestaurantTable,
+      $$RestaurantTablesTableFilterComposer,
+      $$RestaurantTablesTableOrderingComposer,
+      $$RestaurantTablesTableAnnotationComposer,
+      $$RestaurantTablesTableCreateCompanionBuilder,
+      $$RestaurantTablesTableUpdateCompanionBuilder,
+      (
+        RestaurantTable,
+        BaseReferences<_$AppDatabase, $RestaurantTablesTable, RestaurantTable>,
+      ),
+      RestaurantTable,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3814,4 +4282,6 @@ class $AppDatabaseManager {
       $$IngredientsTableTableManager(_db, _db.ingredients);
   $$RecipesTableTableManager get recipes =>
       $$RecipesTableTableManager(_db, _db.recipes);
+  $$RestaurantTablesTableTableManager get restaurantTables =>
+      $$RestaurantTablesTableTableManager(_db, _db.restaurantTables);
 }

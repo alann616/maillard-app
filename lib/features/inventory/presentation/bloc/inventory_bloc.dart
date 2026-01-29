@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:app/core/database/app_database.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../domain/repositories/inventory_repository.dart';
@@ -10,13 +11,21 @@ abstract class InventoryEvent extends Equatable {
   @override
   List<Object> get props => [];
 }
+
 class SubscribeToInventory extends InventoryEvent {}
+
 class _InventoryUpdated extends InventoryEvent {
   final List<Ingredient> ingredients;
   const _InventoryUpdated(this.ingredients);
 }
 
 // Estados
+class AddStock extends InventoryEvent {
+  final int ingredientId;
+  final double quantity;
+  const AddStock(this.ingredientId, this.quantity);
+}
+
 abstract class InventoryState extends Equatable {
   const InventoryState();
   @override
@@ -36,6 +45,7 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
   StreamSubscription? _subscription;
 
   InventoryBloc(this._repository) : super(InventoryLoading()) {
+    
     on<SubscribeToInventory>((event, emit) {
       _subscription?.cancel();
       _subscription = _repository.getInventoryStream().listen((items) {
@@ -45,6 +55,16 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
 
     on<_InventoryUpdated>((event, emit) {
       emit(InventoryLoaded(event.ingredients));
+    });
+
+    // NUEVA LÓGICA: Manejar la suma de stock
+    on<AddStock>((event, emit) async {
+      try {
+        await _repository.addStock(event.ingredientId, event.quantity);
+        // No emitimos estado manual; el Stream de la BD nos avisará del cambio.
+      } catch (e) {
+        debugPrint("Error al agregar stock: $e");
+      }
     });
   }
 
