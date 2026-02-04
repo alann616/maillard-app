@@ -49,7 +49,7 @@ class AdminProductsScreen extends StatelessWidget {
               return ListView.separated(
                 padding: const EdgeInsets.all(20),
                 itemCount: state.products.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (context, index) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final product = state.products[index];
                   return _AdminProductTile(product: product);

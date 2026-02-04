@@ -3,7 +3,7 @@ import 'package:app/features/pos/domain/models/user_role.dart';
 import 'package:app/features/pos/presentation/widgets/ticket_sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart'; // <--- IMPORTANTE
+import 'package:go_router/go_router.dart';
 
 import '../../../../config/theme/app_theme.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -60,18 +60,15 @@ class _MenuScreenView extends StatelessWidget {
       floatingActionButton: RoleGuard(
         allowedRoles: const [UserRole.admin],
         child: FloatingActionButton(
-          backgroundColor: AppTheme.primary,
-          child: const Icon(Icons.edit_note, color: Colors.white), // Icono de edición
+          backgroundColor: AppTheme.primary, // Icono de edición
           tooltip: "Administrar Productos",
           onPressed: () async {
-            // 1. Navegamos a la pantalla de admin y ESPERAMOS a que regrese
             await context.push('/admin/products');
-            
-            // 2. Al volver, si la pantalla sigue viva, recargamos el menú
             if (context.mounted) {
               context.read<MenuBloc>().add(LoadProducts());
             }
           },
+          child: const Icon(Icons.edit_note, color: Colors.white),
         ),
       ),
       body: state.status == MenuStatus.loading

@@ -78,7 +78,7 @@ class _InventoryItemCard extends StatelessWidget {
               final quantity = double.tryParse(controller.text);
               if (quantity != null && quantity > 0) {
                 // 1. Disparamos el evento al Bloc (Usamos el context original, no el del dialogo)
-                context.read<InventoryBloc>().add(AddStock(item.id, quantity));
+                context.read<InventoryBloc>().add(UpdateStock(item.id, quantity));
                 // 2. Cerramos y mostramos confirmación
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(

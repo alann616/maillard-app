@@ -12,11 +12,21 @@ import '../../features/pos/domain/models/user_role.dart';
 import '../../features/sales/data/database/sales.dart';
 import '../../features/inventory/data/database/inventory.dart';
 import '../../features/pos/data/database/tables.dart';
+import '../../features/inventory/data/database/inventory_transactions.dart';
 
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [Products, Users, Sales, SaleItems, Ingredients, Recipes, RestaurantTables],
+  tables: [
+    Products, 
+    Users, 
+    Sales, 
+    SaleItems, 
+    Ingredients, 
+    Recipes, 
+    RestaurantTables,
+    InventoryTransactions
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   static final AppDatabase _instance = AppDatabase._internal();
@@ -24,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase._internal() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   // --- ESTRATEGIA DE MIGRACIÓN ---
   @override
@@ -47,6 +57,10 @@ class AppDatabase extends _$AppDatabase {
           await m.createTable(restaurantTables);
           await m.addColumn(sales, sales.status);
           await m.addColumn(sales, sales.tableId);
+        }
+        if (from < 6) {
+          await m.createTable(inventoryTransactions);
+          debugPrint("📦 Tabla InventoryTransactions creada (v6)");
         }
       },
     );
