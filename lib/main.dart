@@ -3,9 +3,12 @@ import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:app/features/inventory/data/repositories/inventory_repository_impl.dart';
 import 'package:app/features/inventory/presentation/bloc/inventory_bloc.dart';
 import 'package:app/features/pos/presentation/bloc/table_bloc.dart';
+import 'package:app/features/sales/data/repositories/sales_repository_impl.dart';
+import 'package:app/features/sales/presentation/bloc/sales_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-// Imports de tu proyecto
+import 'features/pos/presentation/bloc/product_management/product_management_bloc.dart';
+
 import 'package:app/config/router/app_router.dart';
 import 'package:app/core/database/app_database.dart';
 import 'package:app/features/pos/data/repositories/product_repository_impl.dart';
@@ -35,6 +38,8 @@ class MainApp extends StatelessWidget {
         RepositoryProvider(create: (context) => ProductRepositoryImpl(db)),
         RepositoryProvider(create: (context) => AuthRepositoryImpl(db)),
         RepositoryProvider(create: (context) => InventoryRepositoryImpl(db)),
+        // CORRECCIÓN: Agregar SalesRepository aquí
+        RepositoryProvider(create: (context) => SalesRepositoryImpl(db)),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -55,11 +60,20 @@ class MainApp extends StatelessWidget {
           ),
           BlocProvider(
             create: (context) => TableBloc(db)..add(SubscribeToTables())
-          )
+          ),
+          BlocProvider(
+            create: (context) => SalesBloc(
+              context.read<SalesRepositoryImpl>(),
+            )..add(LoadSalesHistory()), // Cargar historial al iniciar (o puedes cargarlo lazy)
+          ),
+          BlocProvider(create: (context) => ProductManagementBloc(
+            context.read<ProductRepositoryImpl>(),
+            ),
+          ),
         ],
         child: MaterialApp.router(
           routerConfig: appRouter,
-          // ... resto del código ...
+          debugShowCheckedModeBanner: false, // Opcional: Quitar listón debug
         ),
       ),
     );

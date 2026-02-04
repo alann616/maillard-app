@@ -1,12 +1,13 @@
+import 'package:app/features/auth/presentation/widgets/role_guard.dart';
+import 'package:app/features/pos/domain/models/user_role.dart';
+import 'package:app/features/pos/presentation/widgets/ticket_sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-// Imports propios
+import 'package:go_router/go_router.dart'; // <--- IMPORTANTE
+
 import '../../../../config/theme/app_theme.dart';
 import '../../../../shared/widgets/primary_button.dart';
-import '../../../auth/presentation/widgets/role_guard.dart';
-import '../../../pos/domain/models/user_role.dart';
-import '../../presentation/widgets/ticket_sidebar.dart';
-import '../bloc/menu_bloc.dart'; // Importa SaveOrder aquí
+import '../bloc/menu_bloc.dart';
 import '../widgets/product_list_view.dart';
 
 class MenuScreen extends StatelessWidget {
@@ -18,7 +19,12 @@ class MenuScreen extends StatelessWidget {
     final int id = int.tryParse(tableId) ?? 0;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MenuBloc>().add(SetupTable(id));
+      final bloc = context.read<MenuBloc>();
+      // 1. Configuramos la mesa
+      bloc.add(SetupTable(id));
+      // 2. CAMBIO: Forzamos la carga de productos al entrar
+      // Esto asegura que si acabas de cambiar un precio, se vea reflejado.
+      bloc.add(LoadProducts());
     });
     
     return const _MenuScreenView();
@@ -43,20 +49,28 @@ class _MenuScreenView extends StatelessWidget {
             allowedRoles: const [UserRole.admin],
             child: IconButton(
               icon: const Icon(Icons.settings),
-              onPressed: () { /* Ir a ajustes */ },
+              onPressed: () {
+                /* Ir a ajustes */
+              },
             ),
           ),
         ],
       ),
+      // --- BOTÓN FLOTANTE CONECTADO ---
       floatingActionButton: RoleGuard(
         allowedRoles: const [UserRole.admin],
         child: FloatingActionButton(
           backgroundColor: AppTheme.primary,
-          child: const Icon(Icons.add, color: Colors.white),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("¡Hola Jefe! Aquí crearás productos.")),
-            );
+          child: const Icon(Icons.edit_note, color: Colors.white), // Icono de edición
+          tooltip: "Administrar Productos",
+          onPressed: () async {
+            // 1. Navegamos a la pantalla de admin y ESPERAMOS a que regrese
+            await context.push('/admin/products');
+            
+            // 2. Al volver, si la pantalla sigue viva, recargamos el menú
+            if (context.mounted) {
+              context.read<MenuBloc>().add(LoadProducts());
+            }
           },
         ),
       ),
@@ -68,7 +82,6 @@ class _MenuScreenView extends StatelessWidget {
     );
   }
 
-  // --- LAYOUT TABLET ---
   Widget _buildTabletLayout(BuildContext context, MenuState state) {
     return Row(
       children: [
@@ -84,7 +97,6 @@ class _MenuScreenView extends StatelessWidget {
           flex: 1,
           child: Container(
             color: Colors.white,
-            // Aquí conectamos el nuevo evento onSave
             child: TicketSidebar(
               order: state.orderItems,
               total: state.total,
@@ -92,13 +104,12 @@ class _MenuScreenView extends StatelessWidget {
                 RemoveProductFromOrder(state.orderItems[idx].product),
               ),
               onCheckout: () => context.read<MenuBloc>().add(ProcessCheckout()),
-              // NUEVO: Conectamos Guardar
               onSave: () {
                 context.read<MenuBloc>().add(SaveOrder());
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Comanda Guardada 📝"), backgroundColor: Colors.orange),
                 );
-                Navigator.pop(context); // Salir al mapa
+                Navigator.pop(context);
               },
             ),
           ),
@@ -107,7 +118,6 @@ class _MenuScreenView extends StatelessWidget {
     );
   }
 
-  // --- LAYOUT MÓVIL ---
   Widget _buildMobileLayout(BuildContext context, MenuState state) {
     return Stack(
       children: [
@@ -159,14 +169,13 @@ class _MenuScreenView extends StatelessWidget {
                     context.read<MenuBloc>().add(ProcessCheckout());
                     Navigator.pop(context);
                   },
-                  // NUEVO: Conectamos Guardar en Móvil también
                   onSave: () {
                     context.read<MenuBloc>().add(SaveOrder());
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Comanda Guardada 📝"), backgroundColor: Colors.orange),
                     );
-                    Navigator.pop(context); // Cierra el Sheet
-                    Navigator.pop(context); // Sale al mapa (Opcional, si quieres que te saque de la mesa)
+                    Navigator.pop(context); // Cierra modal
+                    Navigator.pop(context); // Sale al mapa
                   },
                 ),
               );
