@@ -25,3 +25,10 @@ class DeleteProductEvent extends ProductManagementEvent {
   final int id;
   const DeleteProductEvent(this.id);
 }
+
+
+class SaveRecipeEvent extends ProductManagementEvent {
+  final int productId;
+  final List<RecipeDTO> items;
+  const SaveRecipeEvent(this.productId, this.items);
+}

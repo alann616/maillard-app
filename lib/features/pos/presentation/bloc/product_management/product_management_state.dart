@@ -11,11 +11,8 @@ final class ProductManagementLoading extends ProductManagementState {}
 
 final class ProductManagementLoaded extends ProductManagementState {
   final List<Product> products;
-  // Timestamp para forzar redibujado si la lista es igual pero cambió el contenido
   final int timestamp; 
-
   const ProductManagementLoaded(this.products, this.timestamp);
-  
   @override
   List<Object> get props => [products, timestamp];
 }

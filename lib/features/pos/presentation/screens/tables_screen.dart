@@ -1,5 +1,3 @@
-import 'package:app/features/auth/presentation/widgets/role_guard.dart';
-import 'package:app/features/pos/domain/models/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -18,32 +16,15 @@ class TablesScreen extends StatelessWidget {
       backgroundColor: AppTheme.secondary,
       appBar: AppBar(
         title: const Text(
-          'Mapa de Mesas',
+          'Mesas y barra',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
         actions: [
-          RoleGuard(
-            allowedRoles: const [UserRole.admin],
-            child: IconButton(
-              icon: const Icon(Icons.restaurant_menu), // Icono de Menú/Carta
-              tooltip: 'Administrar Menú',
-              onPressed: () => context.push('/admin/products'),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.assessment), // Icono de Gráfica/Reporte
-            tooltip: 'Historial de Ventas',
-            onPressed: () => context.push('/sales'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.inventory_2),
-            tooltip: 'Ver Inventario',
-            onPressed: () => context.push('/inventory'),
-          ),
           IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: 'Cerrar sesión',
             onPressed: () {
               context.read<AuthBloc>().add(LogoutRequested());
               context.go('/login');

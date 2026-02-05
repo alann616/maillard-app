@@ -32,13 +32,11 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Usamos MultiRepositoryProvider para inyectar ambos repos
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider(create: (context) => ProductRepositoryImpl(db)),
         RepositoryProvider(create: (context) => AuthRepositoryImpl(db)),
         RepositoryProvider(create: (context) => InventoryRepositoryImpl(db)),
-        // CORRECCIÓN: Agregar SalesRepository aquí
         RepositoryProvider(create: (context) => SalesRepositoryImpl(db)),
       ],
       child: MultiBlocProvider(
@@ -51,7 +49,7 @@ class MainApp extends StatelessWidget {
           ),
           BlocProvider(
             create: (context) =>
-                AuthBloc(context.read<AuthRepositoryImpl>()), // <--- NUEVO
+                AuthBloc(context.read<AuthRepositoryImpl>()),
           ),
           BlocProvider(
             create: (context) => InventoryBloc(
@@ -64,7 +62,7 @@ class MainApp extends StatelessWidget {
           BlocProvider(
             create: (context) => SalesBloc(
               context.read<SalesRepositoryImpl>(),
-            )..add(LoadSalesHistory()), // Cargar historial al iniciar (o puedes cargarlo lazy)
+            )..add(LoadSalesHistory()),
           ),
           BlocProvider(create: (context) => ProductManagementBloc(
             context.read<ProductRepositoryImpl>(),

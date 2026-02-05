@@ -6,16 +6,23 @@ import '../../../domain/repositories/product_repository.dart';
 part 'product_management_event.dart';
 part 'product_management_state.dart';
 
-class ProductManagementBloc extends Bloc<ProductManagementEvent, ProductManagementState> {
+class ProductManagementBloc
+    extends Bloc<ProductManagementEvent, ProductManagementState> {
   final ProductRepository _repository;
 
-  ProductManagementBloc(this._repository) : super(ProductManagementInitial()) {
-    
+  ProductManagementBloc(this._repository)
+    : super(ProductManagementInitial()) {
+
     on<LoadAdminProducts>((event, emit) async {
       emit(ProductManagementLoading());
       try {
         final products = await _repository.getAllProducts();
-        emit(ProductManagementLoaded(products, DateTime.now().millisecondsSinceEpoch));
+        emit(
+          ProductManagementLoaded(
+            products,
+            DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
       } catch (e) {
         emit(ProductManagementError("Error cargando productos: $e"));
       }
@@ -24,7 +31,11 @@ class ProductManagementBloc extends Bloc<ProductManagementEvent, ProductManageme
     on<CreateProductEvent>((event, emit) async {
       emit(ProductManagementLoading());
       try {
-        await _repository.createProduct(event.name, event.price, event.category);
+        await _repository.createProduct(
+          event.name,
+          event.price,
+          event.category,
+        );
         emit(const ProductOperationSuccess("Producto creado exitosamente"));
         add(LoadAdminProducts()); // Recargar lista
       } catch (e) {
