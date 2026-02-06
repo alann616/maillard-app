@@ -70,13 +70,16 @@ class InventoryRepositoryImpl implements InventoryRepository {
 
   @override
   Future<void> updateIngredient(Ingredient ingredient) {
-    // Solo actualizamos metadatos, NO el stock (eso se hace vía adjustStock)
+    // Solo actualizamos metadatos
     return (_db.update(_db.ingredients)..where((t) => t.id.equals(ingredient.id)))
         .write(IngredientsCompanion(
           name: Value(ingredient.name),
           unit: Value(ingredient.unit),
           costPerUnit: Value(ingredient.costPerUnit),
           minStock: Value(ingredient.minStock),
+          // 👇 AGREGAR ESTAS DOS LÍNEAS:
+          purchaseUnit: Value(ingredient.purchaseUnit),
+          packageSize: Value(ingredient.packageSize),
         ));
   }
 

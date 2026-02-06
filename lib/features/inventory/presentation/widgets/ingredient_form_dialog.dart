@@ -116,15 +116,24 @@ class _IngredientFormDialogState extends State<IngredientFormDialog> {
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: TextFormField(
-                              controller: _packageSizeCtrl,
-                              decoration: const InputDecoration(
-                                labelText: "Contenido",
-                                hintText: "Ej. 750"
-                              ),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
-                              validator: (v) => _hasPackage && v!.isEmpty ? "Requerido" : null,
+                            child: ValueListenableBuilder(
+                              // Escuchamos lo que escribes en el campo de unidad principal (_unitCtrl)
+                              valueListenable: _unitCtrl,
+                              builder: (context, TextEditingValue value, child) {
+                                return TextFormField(
+                                  controller: _packageSizeCtrl,
+                                  decoration: InputDecoration(
+                                    labelText: "Contenido",
+                                    hintText: "Ej. 750",
+                                    // 👇 AQUÍ LA MAGIA: Muestra la unidad (ej. "ml") al final
+                                    suffixText: value.text.isEmpty ? null : value.text, 
+                                    suffixStyle: const TextStyle(color: Colors.grey),
+                                  ),
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+                                  validator: (v) => _hasPackage && v!.isEmpty ? "Requerido" : null,
+                                );
+                              },
                             ),
                           ),
                         ],
