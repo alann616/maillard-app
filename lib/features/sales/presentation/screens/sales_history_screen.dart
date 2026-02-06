@@ -1,10 +1,7 @@
-// lib/features/sales/presentation/screens/sales_history_screen.dart
-
+import 'package:app/config/theme/app_theme.dart';
+import 'package:app/features/sales/presentation/bloc/sales_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import '../../../../config/theme/app_theme.dart';
-import '../bloc/sales_bloc.dart';
 
 class SalesHistoryScreen extends StatelessWidget {
   const SalesHistoryScreen({super.key});

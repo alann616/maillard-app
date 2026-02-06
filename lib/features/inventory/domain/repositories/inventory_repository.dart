@@ -1,21 +1,22 @@
-import 'package:app/core/database/app_database.dart'; 
+import 'package:app/core/database/app_database.dart';
 import 'package:app/features/inventory/data/database/inventory_transactions.dart';
 
 abstract class InventoryRepository {
-  /// Escucha cambios en tiempo real del inventario
   Stream<List<Ingredient>> getInventoryStream();
+  
+  // Create sí devuelve int (el ID creado), eso es útil.
+  Future<int> createIngredient({
+    required String name,
+    required String unit,
+    required double cost,
+    required double minStock,
+    double initialStock = 0.0, // Opcional con default
+    String? purchaseUnit,      // Opcional
+    double? packageSize,       // Opcional
+  });
 
-  /// Ajusta el stock (Suma o Resta) y genera un log en el historial
-  Future<void> adjustStock(int ingredientId, double quantity, TransactionType type);
-
-  // --- NUEVOS MÉTODOS CRUD ---
-
-  /// Crea un nuevo insumo y registra su stock inicial
-  Future<int> createIngredient(String name, String unit, double cost, double minStock, double initialStock);
-
-  /// Actualiza datos básicos (Nombre, Unidad, Costo, Mínimo). NO altera el stock actual.
   Future<void> updateIngredient(Ingredient ingredient);
-
-  /// Elimina un insumo de la base de datos
   Future<void> deleteIngredient(int id);
+  
+  Future<void> adjustStock(int ingredientId, double quantity, TransactionType type);
 }

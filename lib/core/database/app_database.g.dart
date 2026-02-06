@@ -1476,6 +1476,28 @@ class $IngredientsTable extends Ingredients
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _purchaseUnitMeta = const VerificationMeta(
+    'purchaseUnit',
+  );
+  @override
+  late final GeneratedColumn<String> purchaseUnit = GeneratedColumn<String>(
+    'purchase_unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _packageSizeMeta = const VerificationMeta(
+    'packageSize',
+  );
+  @override
+  late final GeneratedColumn<double> packageSize = GeneratedColumn<double>(
+    'package_size',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1484,6 +1506,8 @@ class $IngredientsTable extends Ingredients
     currentStock,
     minStock,
     costPerUnit,
+    purchaseUnit,
+    packageSize,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1544,6 +1568,24 @@ class $IngredientsTable extends Ingredients
     } else if (isInserting) {
       context.missing(_costPerUnitMeta);
     }
+    if (data.containsKey('purchase_unit')) {
+      context.handle(
+        _purchaseUnitMeta,
+        purchaseUnit.isAcceptableOrUnknown(
+          data['purchase_unit']!,
+          _purchaseUnitMeta,
+        ),
+      );
+    }
+    if (data.containsKey('package_size')) {
+      context.handle(
+        _packageSizeMeta,
+        packageSize.isAcceptableOrUnknown(
+          data['package_size']!,
+          _packageSizeMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1577,6 +1619,14 @@ class $IngredientsTable extends Ingredients
         DriftSqlType.double,
         data['${effectivePrefix}cost_per_unit'],
       )!,
+      purchaseUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}purchase_unit'],
+      ),
+      packageSize: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}package_size'],
+      ),
     );
   }
 
@@ -1593,6 +1643,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
   final double currentStock;
   final double minStock;
   final double costPerUnit;
+  final String? purchaseUnit;
+  final double? packageSize;
   const Ingredient({
     required this.id,
     required this.name,
@@ -1600,6 +1652,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     required this.currentStock,
     required this.minStock,
     required this.costPerUnit,
+    this.purchaseUnit,
+    this.packageSize,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1610,6 +1664,12 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     map['current_stock'] = Variable<double>(currentStock);
     map['min_stock'] = Variable<double>(minStock);
     map['cost_per_unit'] = Variable<double>(costPerUnit);
+    if (!nullToAbsent || purchaseUnit != null) {
+      map['purchase_unit'] = Variable<String>(purchaseUnit);
+    }
+    if (!nullToAbsent || packageSize != null) {
+      map['package_size'] = Variable<double>(packageSize);
+    }
     return map;
   }
 
@@ -1621,6 +1681,12 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       currentStock: Value(currentStock),
       minStock: Value(minStock),
       costPerUnit: Value(costPerUnit),
+      purchaseUnit: purchaseUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(purchaseUnit),
+      packageSize: packageSize == null && nullToAbsent
+          ? const Value.absent()
+          : Value(packageSize),
     );
   }
 
@@ -1636,6 +1702,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       currentStock: serializer.fromJson<double>(json['currentStock']),
       minStock: serializer.fromJson<double>(json['minStock']),
       costPerUnit: serializer.fromJson<double>(json['costPerUnit']),
+      purchaseUnit: serializer.fromJson<String?>(json['purchaseUnit']),
+      packageSize: serializer.fromJson<double?>(json['packageSize']),
     );
   }
   @override
@@ -1648,6 +1716,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       'currentStock': serializer.toJson<double>(currentStock),
       'minStock': serializer.toJson<double>(minStock),
       'costPerUnit': serializer.toJson<double>(costPerUnit),
+      'purchaseUnit': serializer.toJson<String?>(purchaseUnit),
+      'packageSize': serializer.toJson<double?>(packageSize),
     };
   }
 
@@ -1658,6 +1728,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     double? currentStock,
     double? minStock,
     double? costPerUnit,
+    Value<String?> purchaseUnit = const Value.absent(),
+    Value<double?> packageSize = const Value.absent(),
   }) => Ingredient(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -1665,6 +1737,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     currentStock: currentStock ?? this.currentStock,
     minStock: minStock ?? this.minStock,
     costPerUnit: costPerUnit ?? this.costPerUnit,
+    purchaseUnit: purchaseUnit.present ? purchaseUnit.value : this.purchaseUnit,
+    packageSize: packageSize.present ? packageSize.value : this.packageSize,
   );
   Ingredient copyWithCompanion(IngredientsCompanion data) {
     return Ingredient(
@@ -1678,6 +1752,12 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       costPerUnit: data.costPerUnit.present
           ? data.costPerUnit.value
           : this.costPerUnit,
+      purchaseUnit: data.purchaseUnit.present
+          ? data.purchaseUnit.value
+          : this.purchaseUnit,
+      packageSize: data.packageSize.present
+          ? data.packageSize.value
+          : this.packageSize,
     );
   }
 
@@ -1689,14 +1769,24 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           ..write('unit: $unit, ')
           ..write('currentStock: $currentStock, ')
           ..write('minStock: $minStock, ')
-          ..write('costPerUnit: $costPerUnit')
+          ..write('costPerUnit: $costPerUnit, ')
+          ..write('purchaseUnit: $purchaseUnit, ')
+          ..write('packageSize: $packageSize')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, unit, currentStock, minStock, costPerUnit);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    unit,
+    currentStock,
+    minStock,
+    costPerUnit,
+    purchaseUnit,
+    packageSize,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1706,7 +1796,9 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           other.unit == this.unit &&
           other.currentStock == this.currentStock &&
           other.minStock == this.minStock &&
-          other.costPerUnit == this.costPerUnit);
+          other.costPerUnit == this.costPerUnit &&
+          other.purchaseUnit == this.purchaseUnit &&
+          other.packageSize == this.packageSize);
 }
 
 class IngredientsCompanion extends UpdateCompanion<Ingredient> {
@@ -1716,6 +1808,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
   final Value<double> currentStock;
   final Value<double> minStock;
   final Value<double> costPerUnit;
+  final Value<String?> purchaseUnit;
+  final Value<double?> packageSize;
   const IngredientsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -1723,6 +1817,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     this.currentStock = const Value.absent(),
     this.minStock = const Value.absent(),
     this.costPerUnit = const Value.absent(),
+    this.purchaseUnit = const Value.absent(),
+    this.packageSize = const Value.absent(),
   });
   IngredientsCompanion.insert({
     this.id = const Value.absent(),
@@ -1731,6 +1827,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     required double currentStock,
     this.minStock = const Value.absent(),
     required double costPerUnit,
+    this.purchaseUnit = const Value.absent(),
+    this.packageSize = const Value.absent(),
   }) : name = Value(name),
        unit = Value(unit),
        currentStock = Value(currentStock),
@@ -1742,6 +1840,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     Expression<double>? currentStock,
     Expression<double>? minStock,
     Expression<double>? costPerUnit,
+    Expression<String>? purchaseUnit,
+    Expression<double>? packageSize,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1750,6 +1850,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       if (currentStock != null) 'current_stock': currentStock,
       if (minStock != null) 'min_stock': minStock,
       if (costPerUnit != null) 'cost_per_unit': costPerUnit,
+      if (purchaseUnit != null) 'purchase_unit': purchaseUnit,
+      if (packageSize != null) 'package_size': packageSize,
     });
   }
 
@@ -1760,6 +1862,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     Value<double>? currentStock,
     Value<double>? minStock,
     Value<double>? costPerUnit,
+    Value<String?>? purchaseUnit,
+    Value<double?>? packageSize,
   }) {
     return IngredientsCompanion(
       id: id ?? this.id,
@@ -1768,6 +1872,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       currentStock: currentStock ?? this.currentStock,
       minStock: minStock ?? this.minStock,
       costPerUnit: costPerUnit ?? this.costPerUnit,
+      purchaseUnit: purchaseUnit ?? this.purchaseUnit,
+      packageSize: packageSize ?? this.packageSize,
     );
   }
 
@@ -1792,6 +1898,12 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     if (costPerUnit.present) {
       map['cost_per_unit'] = Variable<double>(costPerUnit.value);
     }
+    if (purchaseUnit.present) {
+      map['purchase_unit'] = Variable<String>(purchaseUnit.value);
+    }
+    if (packageSize.present) {
+      map['package_size'] = Variable<double>(packageSize.value);
+    }
     return map;
   }
 
@@ -1803,7 +1915,9 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
           ..write('unit: $unit, ')
           ..write('currentStock: $currentStock, ')
           ..write('minStock: $minStock, ')
-          ..write('costPerUnit: $costPerUnit')
+          ..write('costPerUnit: $costPerUnit, ')
+          ..write('purchaseUnit: $purchaseUnit, ')
+          ..write('packageSize: $packageSize')
           ..write(')'))
         .toString();
   }
@@ -3810,6 +3924,8 @@ typedef $$IngredientsTableCreateCompanionBuilder =
       required double currentStock,
       Value<double> minStock,
       required double costPerUnit,
+      Value<String?> purchaseUnit,
+      Value<double?> packageSize,
     });
 typedef $$IngredientsTableUpdateCompanionBuilder =
     IngredientsCompanion Function({
@@ -3819,6 +3935,8 @@ typedef $$IngredientsTableUpdateCompanionBuilder =
       Value<double> currentStock,
       Value<double> minStock,
       Value<double> costPerUnit,
+      Value<String?> purchaseUnit,
+      Value<double?> packageSize,
     });
 
 final class $$IngredientsTableReferences
@@ -3912,6 +4030,16 @@ class $$IngredientsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get purchaseUnit => $composableBuilder(
+    column: $table.purchaseUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get packageSize => $composableBuilder(
+    column: $table.packageSize,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> recipesRefs(
     Expression<bool> Function($$RecipesTableFilterComposer f) f,
   ) {
@@ -4002,6 +4130,16 @@ class $$IngredientsTableOrderingComposer
     column: $table.costPerUnit,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get purchaseUnit => $composableBuilder(
+    column: $table.purchaseUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get packageSize => $composableBuilder(
+    column: $table.packageSize,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$IngredientsTableAnnotationComposer
@@ -4032,6 +4170,16 @@ class $$IngredientsTableAnnotationComposer
 
   GeneratedColumn<double> get costPerUnit => $composableBuilder(
     column: $table.costPerUnit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get purchaseUnit => $composableBuilder(
+    column: $table.purchaseUnit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get packageSize => $composableBuilder(
+    column: $table.packageSize,
     builder: (column) => column,
   );
 
@@ -4124,6 +4272,8 @@ class $$IngredientsTableTableManager
                 Value<double> currentStock = const Value.absent(),
                 Value<double> minStock = const Value.absent(),
                 Value<double> costPerUnit = const Value.absent(),
+                Value<String?> purchaseUnit = const Value.absent(),
+                Value<double?> packageSize = const Value.absent(),
               }) => IngredientsCompanion(
                 id: id,
                 name: name,
@@ -4131,6 +4281,8 @@ class $$IngredientsTableTableManager
                 currentStock: currentStock,
                 minStock: minStock,
                 costPerUnit: costPerUnit,
+                purchaseUnit: purchaseUnit,
+                packageSize: packageSize,
               ),
           createCompanionCallback:
               ({
@@ -4140,6 +4292,8 @@ class $$IngredientsTableTableManager
                 required double currentStock,
                 Value<double> minStock = const Value.absent(),
                 required double costPerUnit,
+                Value<String?> purchaseUnit = const Value.absent(),
+                Value<double?> packageSize = const Value.absent(),
               }) => IngredientsCompanion.insert(
                 id: id,
                 name: name,
@@ -4147,6 +4301,8 @@ class $$IngredientsTableTableManager
                 currentStock: currentStock,
                 minStock: minStock,
                 costPerUnit: costPerUnit,
+                purchaseUnit: purchaseUnit,
+                packageSize: packageSize,
               ),
           withReferenceMapper: (p0) => p0
               .map(

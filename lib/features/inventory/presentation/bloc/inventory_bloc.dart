@@ -33,6 +33,8 @@ class CreateIngredientEvent extends InventoryEvent {
   final double cost;
   final double minStock;
   final double initialStock;
+  final String? purchaseUnit;
+  final double? packageSize;
 
   const CreateIngredientEvent({
     required this.name, 
@@ -40,6 +42,8 @@ class CreateIngredientEvent extends InventoryEvent {
     required this.cost, 
     required this.minStock,
     this.initialStock = 0.0,
+    this.purchaseUnit,
+    this.packageSize,
   });
 }
 
@@ -120,7 +124,13 @@ class InventoryBloc extends Bloc<InventoryEvent, InventoryState> {
     on<CreateIngredientEvent>((event, emit) async {
       try {
         await _repository.createIngredient(
-          event.name, event.unit, event.cost, event.minStock, event.initialStock
+          name: event.name, 
+          unit: event.unit, 
+          cost: event.cost, 
+          minStock: event.minStock, 
+          initialStock: event.initialStock,
+          purchaseUnit: event.purchaseUnit, // Nuevo
+          packageSize: event.packageSize,
         );
       } catch (e) {
         // En caso de error, podríamos emitir un estado de error temporal,

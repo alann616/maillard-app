@@ -46,32 +46,26 @@ class InventoryRepositoryImpl implements InventoryRepository {
   }
 
   @override
-  Future<int> createIngredient(String name, String unit, double cost, double minStock, double initialStock) {
-    return _db.transaction(() async {
-      // 1. Crear el ingrediente (Usamos Value() explícito para evitar ambigüedades de tipo)
-      final id = await _db.into(_db.ingredients).insert(
-        IngredientsCompanion(
-          name: Value(name),
-          unit: Value(unit),
-          costPerUnit: Value(cost),
-          minStock: Value(minStock),
-          currentStock: Value(initialStock),
-        ),
-      );
-
-      // 2. Si hay stock inicial, registramos el ajuste en el historial
-      if (initialStock > 0) {
-        await _db.into(_db.inventoryTransactions).insert(
-          InventoryTransactionsCompanion(
-            ingredientId: Value(id),
-            quantity: Value(initialStock),
-            type: const Value(TransactionType.adjustment),
-            date: Value(DateTime.now()),
-          ),
-        );
-      }
-      return id;
-    });
+  Future<int> createIngredient({
+    required String name,
+    required String unit,
+    required double cost,
+    required double minStock,
+    double initialStock = 0,
+    String? purchaseUnit, // 👇 Recibimos
+    double? packageSize,  // 👇 Recibimos
+  }) {
+    return _db.into(_db.ingredients).insert(
+      IngredientsCompanion(
+        name: Value(name),
+        unit: Value(unit),
+        costPerUnit: Value(cost),
+        minStock: Value(minStock),
+        currentStock: Value(initialStock),
+        purchaseUnit: Value(purchaseUnit),
+        packageSize: Value(packageSize),
+      ),
+    );
   }
 
   @override

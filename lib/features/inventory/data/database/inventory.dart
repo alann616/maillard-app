@@ -10,6 +10,9 @@ class Ingredients extends Table {
   RealColumn get currentStock => real()(); // Ej: 5000.0 (5kg)
   RealColumn get minStock => real().withDefault(const Constant(0.0))(); // Alerta de stock bajo
   RealColumn get costPerUnit => real()(); // Ej: $0.35 por gramo (Para costeo exacto)
+
+  TextColumn get purchaseUnit => text().nullable()(); // Ej: "Botella", "Caja", "Bolsa"
+  RealColumn get packageSize => real().nullable()(); // Ej: 750.0 (ml), 12.0 (pz)
 }
 
 // 2. RECETAS (La Fórmula Mágica)
