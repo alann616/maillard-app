@@ -1,10 +1,17 @@
+import 'package:app/features/pos/domain/models/order_item.dart';
+
 import '../../../../core/database/app_database.dart';
 
 abstract class SalesRepository {
-  /// Obtiene el historial de ventas completo.
-  /// Opcionalmente filtra por fecha (lo usaremos para el corte del día).
+  /// Historial de ventas (filtro opcional por fechas)
   Future<List<Sale>> getSalesHistory({DateTime? startDate, DateTime? endDate});
   
-  /// Obtiene los detalles (items) de una venta específica.
+  /// Escucha en tiempo real (Stream) para actualizar reportes automáticamente
+  Stream<List<Sale>> getSalesStream();
+
+  /// Detalles de una venta
   Future<List<SaleItem>> getSaleItems(int saleId);
+
+  /// Registrar una venta nueva (Cabecera + Detalles)
+  Future<int> registerSale(Sale sale, List<OrderItem> items);
 }

@@ -21,10 +21,6 @@ class SalesHistoryScreen extends StatelessWidget {
         title: const Text("Historial de Ventas"),
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
       ),
       body: BlocBuilder<SalesBloc, SalesState>(
         builder: (context, state) {

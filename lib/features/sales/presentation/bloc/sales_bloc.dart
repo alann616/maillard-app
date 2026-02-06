@@ -1,3 +1,4 @@
+import 'package:app/features/pos/domain/models/order_item.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/database/app_database.dart';
@@ -11,6 +12,13 @@ abstract class SalesEvent extends Equatable {
 }
 
 class LoadSalesHistory extends SalesEvent {}
+class SubscribeToSales extends SalesEvent {}
+
+class RegisterSale extends SalesEvent {
+  final Sale sale;
+  final List<OrderItem> items;
+  const RegisterSale({required this.sale, required this.items});
+}
 
 // --- ESTADOS ---
 abstract class SalesState extends Equatable {
@@ -40,11 +48,10 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
   final SalesRepository _repository;
 
   SalesBloc(this._repository) : super(SalesInitial()) {
+
     on<LoadSalesHistory>((event, emit) async {
       emit(SalesLoading());
       try {
-        // Por ahora traemos todo el historial histórico
-        // Luego agregaremos filtros de "Hoy", "Semana", etc.
         final sales = await _repository.getSalesHistory();
         
         // Calculamos el total vendido
@@ -53,6 +60,29 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
         emit(SalesLoaded(sales: sales, totalRevenue: total));
       } catch (e) {
         emit(SalesError("Error cargando ventas: $e"));
+      }
+    });
+
+    on<SubscribeToSales>((event, emit) async {
+      emit(SalesLoading());
+      await emit.forEach(
+        _repository.getSalesStream(), // Esto debe existir en tu SalesRepository
+        onData: (List<Sale> sales) {
+          // Calculamos total cada vez que llega data nueva
+          final total = sales.fold(0.0, (sum, sale) => sum + sale.total);
+          // ✅ Pasamos ambos argumentos requeridos
+          return SalesLoaded(sales: sales, totalRevenue: total);
+        },
+        onError: (error, stack) => SalesError(error.toString()),
+      );
+    });
+
+    on<RegisterSale>((event, emit) async {
+      try {
+        await _repository.registerSale(event.sale, event.items);
+        // No emitimos estado, el Stream se encarga
+      } catch (e) {
+        emit(SalesError("Error al cobrar: $e"));
       }
     });
   }

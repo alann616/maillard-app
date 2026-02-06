@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../config/theme/app_theme.dart';
-// Importamos las pantallas que irán en las pestañas
-import '../../../pos/presentation/screens/tables_screen.dart';
-import '../../../pos/presentation/screens/admin_products_screen.dart';
-import '../../../inventory/presentation/screens/inventory_screen.dart';
-import '../../../sales/presentation/screens/sales_history_screen.dart';
+import 'package:app/config/theme/app_theme.dart';
+import 'package:app/features/pos/presentation/screens/tables_screen.dart';
+import 'package:app/features/pos/presentation/screens/admin_products_screen.dart';
+import 'package:app/features/inventory/presentation/screens/inventory_screen.dart';
+import 'package:app/features/sales/presentation/screens/sales_history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

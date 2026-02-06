@@ -7,7 +7,9 @@ import 'package:app/features/sales/data/repositories/sales_repository_impl.dart'
 import 'package:app/features/sales/presentation/bloc/sales_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'features/pos/presentation/bloc/product_management/product_management_bloc.dart';
+
+// ✅ CORREGIDO: Ahora usa package:app/...
+import 'package:app/features/pos/presentation/bloc/product_management/product_management_bloc.dart';
 
 import 'package:app/config/router/app_router.dart';
 import 'package:app/core/database/app_database.dart';
@@ -15,12 +17,9 @@ import 'package:app/features/pos/data/repositories/product_repository_impl.dart'
 import 'package:app/features/pos/presentation/bloc/menu_bloc.dart';
 
 void main() async {
-  // 1. Inicialización del Motor
   WidgetsFlutterBinding.ensureInitialized();
-
-  // 2. Inicialización de la BD
   final db = AppDatabase();
-  await db.seedInitialData();
+  await db.seedInitialData(); // Descomenta solo si necesitas resetear datos
 
   runApp(MainApp(db: db));
 }
@@ -43,35 +42,33 @@ class MainApp extends StatelessWidget {
         providers: [
           BlocProvider(
             create: (context) =>
-                MenuBloc(context.read<ProductRepositoryImpl>(),
-                        db)
-                  ..add(LoadProducts()),
+                MenuBloc(context.read<ProductRepositoryImpl>(), db)..add(LoadProducts()),
           ),
           BlocProvider(
-            create: (context) =>
-                AuthBloc(context.read<AuthRepositoryImpl>()),
+            create: (context) => AuthBloc(context.read<AuthRepositoryImpl>()),
           ),
           BlocProvider(
             create: (context) => InventoryBloc(
-              context.read<InventoryRepositoryImpl>()
-              )..add(SubscribeToInventory()),
+                context.read<InventoryRepositoryImpl>())
+              ..add(SubscribeToInventory()),
           ),
           BlocProvider(
-            create: (context) => TableBloc(db)..add(SubscribeToTables())
+            create: (context) => TableBloc(db)..add(SubscribeToTables()),
           ),
           BlocProvider(
             create: (context) => SalesBloc(
               context.read<SalesRepositoryImpl>(),
-            )..add(LoadSalesHistory()),
+            )..add(SubscribeToSales()),
           ),
-          BlocProvider(create: (context) => ProductManagementBloc(
-            context.read<ProductRepositoryImpl>(),
+          BlocProvider(
+            create: (context) => ProductManagementBloc(
+              context.read<ProductRepositoryImpl>(),
             ),
           ),
         ],
         child: MaterialApp.router(
           routerConfig: appRouter,
-          debugShowCheckedModeBanner: false, // Opcional: Quitar listón debug
+          debugShowCheckedModeBanner: false,
         ),
       ),
     );
